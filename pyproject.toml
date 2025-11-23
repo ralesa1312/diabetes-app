@@ -1,0 +1,45 @@
+# pyproject.toml
+
+[project]
+name = "diabetes-app"
+version = "0.1.0"
+description = "Projet d'analyse et de modélisation du diabète."
+readme = "README.md"
+authors = [
+    {name = "mioty"}
+]
+license = {text = "MIT"}
+
+# 🐍 Spécification de la version de Python (important pour le verrouillage)
+# J'ai défini ici une compatibilité avec Python 3.10, 3.11 et 3.12.
+requires-python = ">=3.10, <3.12" 
+
+# ----------------------------------------------------
+# Dépendances principales (corrigées)
+# ----------------------------------------------------
+dependencies = [
+    "pandas",           # Manipulation de données
+    "scikit-learn",     # Machine Learning (CORRIGÉ : était 'sklearn')
+    "statsmodels",      # Modélisation statistique
+    "lightgbm",         # Gradient Boosting (ML)
+    "pycaret",          # Auto-ML et gestion de modèles
+    "plotly",           # Visualisation interactive
+    "plotly-resampler", # Pour les séries temporelles volumineuses
+    "seaborn",          # Visualisation statistique
+    "streamlit",        # Construction de l'interface utilisateur web
+    "fastjsonschema",   # Validation JSON/données
+]
+
+
+# ----------------------------------------------------
+# Groupes de dépendances optionnelles (pour le développement/tests)
+# ----------------------------------------------------
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-timeout",
+    "jupyter", 
+    "debugpy",
+    "pipx",
+    "GitPython",
+]

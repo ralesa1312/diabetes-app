@@ -1,0 +1,17 @@
+# Fichier .gitignore
+
+# Environnement virtuel de uv (NE JAMAIS VERSIONNER LE .VENV)
+.venv/
+
+# Fichiers de cache Python
+__pycache__/
+*.pyc
+
+# Fichiers de log
+*.log
+
+# Fichiers spécifiques au système d'exploitation
+.DS_Store
+
+# Ignorer la documentation auto-générée si elle existe
+/docs/
