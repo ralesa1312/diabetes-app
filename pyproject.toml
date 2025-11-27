@@ -28,6 +28,7 @@ dependencies = [
     "seaborn",          # Visualisation statistique
     "streamlit",        # Construction de l'interface utilisateur web
     "fastjsonschema",   # Validation JSON/données
+    "pycaret",
 ]
 
 
