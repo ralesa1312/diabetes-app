@@ -15,3 +15,6 @@ __pycache__/
 
 # Ignorer la documentation auto-générée si elle existe
 /docs/
+
+#Ignorer les fichier pkl générés
+*.pkl
