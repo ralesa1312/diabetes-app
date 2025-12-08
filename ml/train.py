@@ -1,6 +1,7 @@
 import logging
 
 import pandas as pd
+import pickle
 from sklearn.ensemble import RandomForestClassifier
 
 from ml.preprocess import preprocess_data, split_data
@@ -33,4 +34,7 @@ def train_model(data_path: str, target: str, model_output: str) -> None:
     model.fit(X_train, y_train)
     logging.info("Modèle entraîné.")
 
-    return model, scaler
+    with open(model_output, "wb") as f:
+        pickle.dump({"model": model, "scaler": scaler}, f)
+    logging.info(f"Modèle et scaler sauvegardés dans {model_output}.")
+

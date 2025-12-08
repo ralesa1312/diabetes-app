@@ -13,9 +13,16 @@ def evaluate(model_path: str, scaler_path: str, data_path: str, target: str):
     scaler = load_model(scaler_path)
 
     df = pd.read_csv(data_path)
-    X, y, _ = preprocess_data(df, target)
+    
+    # 1. Prétraiter les données brutes. 
+    # X contient les features encodées, prêtes pour la mise à l'échelle.
+    # y contient les étiquettes cibles.
+    X, y, _ = preprocess_data(df, target) 
 
-    X_scaled = scaler.transform(df.drop(columns=[target]))
+    #  Appliquer le scaler sur X, et non sur le DataFrame brut.
+    # Cette étape garantit que le scaler voit les colonnes dans le même format et ordre 
+    # que lors de l'entraînement.
+    X_scaled = scaler.transform(X)
 
     preds = model.predict(X_scaled)
 

@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Projet d'analyse et de modélisation du diabète."
 readme = "README.md"
 authors = [{ name = "mioty" }]
-license = { text = "MIT" }
+license = { text = "MIT" } # Attention : Setuptools génère un avertissement sur ce format
 requires-python = ">=3.10, <3.12"
 
 dependencies = [
@@ -50,3 +50,33 @@ python_version = "3.10"
 strict = true
 ignore_missing_imports = true
 disallow_untyped_defs = true
+
+# =========================================================
+# ⚙️ CORRECTION POUR L'INSTALLATION (AJOUTÉ ICI)
+# =========================================================
+
+[tool.setuptools]
+# Indique que nous allons utiliser une méthode de découverte de paquets personnalisée.
+
+[tool.setuptools.packages.find]
+# Inclut explicitement les dossiers qui contiennent du code Python que vous voulez pouvoir importer.
+# Les dossiers 'app' et 'ml' sont considérés comme des paquets installables.
+include = ["app", "ml"]
+
+# Exclut les autres dossiers qui ne sont pas du code source principal (données, modèles, notebooks).
+exclude = ["data*", "models*", "notebooks*"]
+[dependency-groups]
+dev = [
+    "pytest (>=9.0.2,<10.0.0)",
+    "pytest-timeout (>=2.4.0,<3.0.0)",
+    "jupyter (>=1.1.1,<2.0.0)",
+    "debugpy (>=1.8.17,<2.0.0)",
+    "pipx (>=1.8.0,<2.0.0)",
+    "gitpython (>=3.1.45,<4.0.0)",
+    "ruff (>=0.14.8,<0.15.0)",
+    "mypy (>=1.19.0,<2.0.0)"
+]
+
+[tool.poetry]
+package-mode = false
+

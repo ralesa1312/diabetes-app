@@ -1,12 +1,14 @@
 # tests/test_predict.py
-import tempfile
 import os
-import pandas as pd
-from sklearn.ensemble import RandomForestClassifier
-from ml.utils import save_model
-from ml.predict import predict_single
-from sklearn.preprocessing import StandardScaler
+import tempfile
+
 import numpy as np
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.preprocessing import StandardScaler
+
+from ml.predict import predict_single
+from ml.utils import save_model
+
 
 def test_predict_single():
     model = RandomForestClassifier(n_estimators=10, random_state=42)
@@ -16,6 +18,7 @@ def test_predict_single():
 
     scaler = StandardScaler()
     X_scaled = scaler.fit_transform(X_train)
+    print(len(X_scaled))
 
     with tempfile.TemporaryDirectory() as tmpdir:
         model_path = os.path.join(tmpdir, "model.pkl")

@@ -1,8 +1,11 @@
 # tests/test_train.py
 import os
-import pandas as pd
 import tempfile
+
+import pandas as pd
+
 from ml.train import train_model
+
 
 def test_train_model():
     df = pd.DataFrame({
