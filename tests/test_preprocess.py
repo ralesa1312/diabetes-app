@@ -1,4 +1,3 @@
-# tests/test_preprocess.py
 import numpy as np
 import pandas as pd
 
@@ -6,20 +5,30 @@ from ml.preprocess import preprocess_data, split_data
 
 
 def test_preprocess_data():
-    df = pd.DataFrame({
-        "feature1": [1, 2, 3],
-        "feature2": [4, 5, 6],
-        "target": [0, 1, 0]
-    })
-    X, y, scaler = preprocess_data(df, target="target")
+    df = pd.DataFrame({"age": [20, 30, 40], "bmi": [22.5, 27.1, 30.2], "diabetes": [0, 1, 1]})
 
-    assert X.shape == (3, 2)
-    assert y.shape[0] == 3
+    X_scaled, y, scaler = preprocess_data(df, target="diabetes")
+
+    # X : 2 features
+    assert X_scaled.shape == (3, 2)
+
+    # y
+    assert list(y) == [0, 1, 1]
+
+    # scaler
+    assert scaler is not None
+
+    # scaling centré
+    np.testing.assert_almost_equal(X_scaled.mean(axis=0), [0, 0], decimal=6)
+
 
 def test_split_data():
-    X = np.array([[1],[2],[3],[4]])
-    y = np.array([0,1,0,1])
-    X_train, X_test, y_train, y_test = split_data(X, y, test_size=0.5, random_state=42)
+    X = np.random.rand(10, 3)
+    y = np.random.randint(0, 2, size=10)
 
-    assert len(X_train) == 2
-    assert len(X_test) == 2
+    X_train, X_test, y_train, y_test = split_data(X, y, test_size=0.2, random_state=42)
+
+    assert X_train.shape[0] == 8
+    assert X_test.shape[0] == 2
+    assert y_train.shape[0] == 8
+    assert y_test.shape[0] == 2
