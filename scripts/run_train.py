@@ -1,4 +1,9 @@
 import os
+import sys
+
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(PROJECT_ROOT)  # ajoute le projet au PYTHONPATH
+
 from ml.train import train_model
 from ml.utils import DATA_DIR, DEFAULT_MODEL_PATH, DEFAULT_SCALER_PATH
 

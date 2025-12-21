@@ -1,4 +1,10 @@
 import os
+import sys
+
+
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(PROJECT_ROOT)  # ajoute le projet au PYTHONPATH
+
 from ml.evaluate import evaluate
 from ml.utils import DATA_DIR, MODEL_DIR, DEFAULT_MODEL_PATH, DEFAULT_SCALER_PATH
 
