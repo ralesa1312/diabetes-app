@@ -14,7 +14,7 @@ def evaluate(
     scaler_path: str,
     data_path: str,
     target: str,
-    metrics_dir: str = "data/metrics",
+    metrics_dir: str,
 ):
     """
     Évalue un modèle sur des données et sauvegarde les métriques dans data/metrics/
