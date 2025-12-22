@@ -17,7 +17,7 @@ if __name__ == "__main__":
     evaluate(
         model_path=DEFAULT_MODEL_PATH,
         scaler_path=DEFAULT_SCALER_PATH,
-        data_path=os.path.join(DATA_DIR, "processed/X_test.csv"),
-        target="Diabetes_012",
+        data_path=DATA_DIR, 
+        #target="Diabetes_012",
         metrics_dir=METRICS_FILE
     )
