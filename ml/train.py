@@ -21,7 +21,7 @@ def train_model(
     """
 
     # 1) Charger données
-    df = pd.read_csv(data_path)
+    df = pd.read_csv(data_path, sep=",")
     logging.info(
         f"Données chargées depuis {data_path} avec {df.shape[0]} lignes et {df.shape[1]} colonnes."
     )

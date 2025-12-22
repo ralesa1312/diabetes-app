@@ -3,7 +3,12 @@ import logging
 import os
 import pandas as pd
 
-from sklearn.metrics import accuracy_score, confusion_matrix, f1_score
+from sklearn.metrics import (
+    accuracy_score,
+    confusion_matrix,
+    f1_score,
+    roc_auc_score
+)
 
 from ml.utils import load_model
 
@@ -30,8 +35,8 @@ def evaluate(
     # -------------------------
     # 2. Charger données TEST
     # -------------------------
-    X_test = pd.read_csv(os.path.join(data_path, "processed/X_test.csv"))
-    y_test = pd.read_csv(os.path.join(data_path, "processed/y_test.csv")).squeeze()
+    X_test = pd.read_csv(os.path.join(data_path, "processed/X_test.csv"), sep=",")
+    y_test = pd.read_csv(os.path.join(data_path, "processed/y_test.csv"), sep=",").squeeze()
 
     # -------------------------
     # 3. Scaling (transform ONLY)
@@ -41,17 +46,30 @@ def evaluate(
     # -------------------------
     # 4. Prédictions
     # -------------------------
-    preds = model.predict(X_test_scaled)
+    y_pred = model.predict(X_test_scaled)
+
+    # Probabilités pour AUC
+    y_proba = model.predict_proba(X_test_scaled)
 
     # -------------------------
     # 5. Métriques
     # -------------------------
-    accuracy = accuracy_score(y_test, preds)
-    f1 = f1_score(y_test, preds, average="macro")
-    cm = confusion_matrix(y_test, preds)
+    accuracy = accuracy_score(y_test, y_pred)
+    f1 = f1_score(y_test, y_pred, average="macro")
+
+    # Multi-class AUC (ONE VS REST)
+    auc_score = roc_auc_score(
+        y_test,
+        y_proba,
+        multi_class="ovr",
+        average="macro"
+    )
+
+    cm = confusion_matrix(y_test, y_pred)
 
     logging.info("Accuracy : %.4f", accuracy)
     logging.info("F1-score : %.4f", f1)
+    logging.info("AUC : %.4f", auc_score)
     logging.info("Matrice de confusion :\n%s", cm)
 
     # -------------------------
@@ -59,8 +77,10 @@ def evaluate(
     # -------------------------
     metrics_df = pd.DataFrame([{
         "accuracy": accuracy,
-        "f1_macro": f1
+        "f1_macro": f1,
+        "auc": auc_score
     }])
+
     metrics_df.to_csv(
         os.path.join(metrics_dir, "metrics.csv"),
         index=False
@@ -71,10 +91,9 @@ def evaluate(
         index=False
     )
 
-    logging.info("Métriques sauvegardées dans %s", metrics_dir)
-
     return {
         "accuracy": accuracy,
         "f1_macro": f1,
+        "auc": auc_score,
         "confusion_matrix": cm
     }
