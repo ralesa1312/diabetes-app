@@ -1,6 +1,13 @@
+import os
+import sys
+
 import streamlit as st
 import pickle
 import numpy as np
+
+
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(PROJECT_ROOT)  # ajoute le projet au PYTHONPATH
 
 from ml.utils import load_model, DEFAULT_MODEL_PATH, DEFAULT_SCALER_PATH
 
