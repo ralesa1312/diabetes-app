@@ -1,99 +1,50 @@
-# ml/evaluate.py
-import logging
-import os
 import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.metrics import classification_report, roc_auc_score, roc_curve, confusion_matrix
+from .utils import DATA_DIR, MODEL_DIR, load_model
+import os
+import yaml
 
-from sklearn.metrics import (
-    accuracy_score,
-    confusion_matrix,
-    f1_score,
-    roc_auc_score
-)
+def evaluate():
+    with open("config.yaml", 'r') as f:
+        config = yaml.safe_load(f)
 
-from ml.utils import load_model
+    model = load_model(os.path.join(MODEL_DIR, f"{config['model']['name']}.pkl"))
+    test_df = pd.read_parquet(os.path.join(DATA_DIR, config['data']['test_parquet']))
+    
+    X_test = test_df.drop(columns=[config['data']['target']])
+    y_test = test_df[config['data']['target']]
 
+    # 1. Prédictions
+    y_pred = model.predict(X_test)
+    y_probs = model.predict_proba(X_test) # Nécessaire pour l'AUC
 
-def evaluate(
-    model_path: str,
-    scaler_path: str,
-    data_path: str,
-    metrics_dir: str,
-):
-    """
-    Évalue un modèle sur les données de test préprocessées
-    et sauvegarde les métriques dans data/metrics/
-    """
+    # 2. Calcul de l'AUC (stratégie One-vs-Rest pour multiclasse)
+    auc_score = roc_auc_score(y_test, y_probs, multi_class='ovr')
+    print(f"\nScore AUC final sur Test Set : {auc_score:.4f}")
 
-    os.makedirs(metrics_dir, exist_ok=True)
+    # 3. Rapport de Classification
+    print("\n--- Rapport de Classification ---")
+    print(classification_report(y_test, y_pred))
 
-    # -------------------------
-    # 1. Charger modèle & scaler
-    # -------------------------
-    model = load_model(model_path)
-    scaler = load_model(scaler_path)
-
-    # -------------------------
-    # 2. Charger données TEST
-    # -------------------------
-    X_test = pd.read_csv(os.path.join(data_path, "processed/X_test.csv"), sep=",")
-    y_test = pd.read_csv(os.path.join(data_path, "processed/y_test.csv"), sep=",").squeeze()
-
-    # -------------------------
-    # 3. Scaling (transform ONLY)
-    # -------------------------
-    X_test_scaled = scaler.transform(X_test)
-
-    # -------------------------
-    # 4. Prédictions
-    # -------------------------
-    y_pred = model.predict(X_test_scaled)
-
-    # Probabilités pour AUC
-    y_proba = model.predict_proba(X_test_scaled)
-
-    # -------------------------
-    # 5. Métriques
-    # -------------------------
-    accuracy = accuracy_score(y_test, y_pred)
-    f1 = f1_score(y_test, y_pred, average="macro")
-
-    # Multi-class AUC (ONE VS REST)
-    auc_score = roc_auc_score(
-        y_test,
-        y_proba,
-        multi_class="ovr",
-        average="macro"
-    )
-
+    # 4. Visualisation (Matrice de Confusion)
+    plt.figure(figsize=(12, 5))
+    
+    plt.subplot(1, 2, 1)
     cm = confusion_matrix(y_test, y_pred)
+    sns.heatmap(cm, annot=True, fmt='d', cmap='Greens')
+    plt.title("Matrice de Confusion")
 
-    logging.info("Accuracy : %.4f", accuracy)
-    logging.info("F1-score : %.4f", f1)
-    logging.info("AUC : %.4f", auc_score)
-    logging.info("Matrice de confusion :\n%s", cm)
+    # 5. Visualisation (Note: La courbe ROC multiclasse est complexe, ici on affiche l'essentiel)
+    plt.subplot(1, 2, 2)
+    plt.text(0.3, 0.5, f"AUC Score: {auc_score:.4f}", fontsize=15)
+    plt.title("Métrique AUC")
+    plt.axis('off')
 
-    # -------------------------
-    # 6. Sauvegarde métriques
-    # -------------------------
-    metrics_df = pd.DataFrame([{
-        "accuracy": accuracy,
-        "f1_macro": f1,
-        "auc": auc_score
-    }])
+    plt.tight_layout()
+    plt.savefig(os.path.join(DATA_DIR, "metrics/evaluation_metrics.png"))
+    print(f"Graphiques sauvegardés dans {DATA_DIR}")
 
-    metrics_df.to_csv(
-        os.path.join(metrics_dir, "metrics.csv"),
-        index=False
-    )
-
-    pd.DataFrame(cm).to_csv(
-        os.path.join(metrics_dir, "confusion_matrix.csv"),
-        index=False
-    )
-
-    return {
-        "accuracy": accuracy,
-        "f1_macro": f1,
-        "auc": auc_score,
-        "confusion_matrix": cm
-    }
+if __name__ == "__main__":
+    evaluate()

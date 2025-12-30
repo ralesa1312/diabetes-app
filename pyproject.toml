@@ -19,6 +19,10 @@ dependencies = [
     "streamlit",
     "fastjsonschema",
     "imblearn",
+    "pyarrow",
+    "pyyaml",
+    "mlflow",
+    "matplotlib"
 ]
 
 [project.optional-dependencies]

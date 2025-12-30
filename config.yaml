@@ -1,0 +1,12 @@
+project:
+  session_id: 123
+
+data:
+  raw_file: "diabetes_012_health_indicators_BRFSS2015.csv"
+  train_parquet: "processed/train.parquet"
+  test_parquet: "processed/test.parquet"
+  target: "Diabetes_012"
+
+model:
+  name: "best_diabetes_model"
+  experiment_name: "Diabetes_MLOps_Professional"

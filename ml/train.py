@@ -1,65 +1,79 @@
-import logging
-
 import pandas as pd
+import yaml
 import os
-from sklearn.ensemble import RandomForestClassifier
+import logging
+import mlflow
+import mlflow.sklearn
+from sklearn.model_selection import cross_validate
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
 
-from ml.preprocess import preprocess_data, split_data
-from ml.utils import save_model
+from .utils import DATA_DIR, MODEL_DIR, save_model
 
+logging.basicConfig(level=logging.INFO)
 
-def train_model(
-    data_path: str,
-    target: str,
-    model_output: str,
-    scaler_output: str,
-    preprocessed_dir: str,  # dossier pour X_train/X_test
-) -> None:
-    """
-    Entraîne un modèle de classification RandomForest et sauvegarde
-    le modèle, le scaler et les datasets train/test.
-    """
+def train():
+    with open("config.yaml", 'r') as f:
+        config = yaml.safe_load(f)
 
-    # 1) Charger données
-    df = pd.read_csv(data_path, sep=",")
-    logging.info(
-        f"Données chargées depuis {data_path} avec {df.shape[0]} lignes et {df.shape[1]} colonnes."
-    )
+    train_df = pd.read_parquet(os.path.join(DATA_DIR, config['data']['train_parquet']))
+    X = train_df.drop(columns=[config['data']['target']])
+    y = train_df[config['data']['target']]
 
-    # 2) Prétraiter données
-    X, y, scaler = preprocess_data(df, target)
-    logging.info("Données prétraitées.")
+    models_to_test = {
+        "LogisticRegression": LogisticRegression(max_iter=1000),
+        "RandomForest": RandomForestClassifier(n_estimators=100),
+        "GradientBoosting": GradientBoostingClassifier()
+    }
 
-    if preprocessed_dir is None:
-        from ml.utils import DATA_DIR
-        preprocessed_dir = os.path.join(DATA_DIR, "processed")
+    best_auc = 0
+    best_pipeline = None
+    best_name = ""
 
-    os.makedirs(preprocessed_dir, exist_ok=True)  # <-- ici, on crée le dossier
+    mlflow.set_experiment(config['model']['experiment_name'])
 
-    # 3) Séparer train/test et sauvegarder les fichiers
-    X_train, X_test, y_train, y_test = split_data(
-        X, y,
-        test_size=0.2,
-        random_state=42,
-        X_train_path=os.path.join(preprocessed_dir, "X_train.csv"),
-        X_test_path=os.path.join(preprocessed_dir, "X_test.csv"),
-        y_train_path=os.path.join(preprocessed_dir, "y_train.csv"),
-        y_test_path=os.path.join(preprocessed_dir, "y_test.csv"),
-    )
+    for name, model in models_to_test.items():
+        with mlflow.start_run(run_name=name, nested=True):
+            pipeline = Pipeline([
+                ('scaler', StandardScaler()),
+                ('classifier', model)
+            ])
 
-    logging.info(
-        f"Données séparées et sauvegardées dans {preprocessed_dir} "
-        f"(train {X_train.shape[0]}, test {X_test.shape[0]})."
-    )
+            # cross_validate permet de calculer plusieurs métriques d'un coup
+            # 'roc_auc_ovr' est utilisé car votre cible peut avoir 3 classes (0,1,2)
+            cv_results = cross_validate(
+                pipeline, X, y, cv=5, 
+                scoring=['accuracy', 'roc_auc_ovr'],
+                return_train_score=False
+            )
 
-    # 4) Entraîner modèle
-    model = RandomForestClassifier(n_estimators=100, random_state=42, max_depth=10)
-    model.fit(X_train, y_train)
-    logging.info("Modèle entraîné.")
+            mean_accuracy = cv_results['test_accuracy'].mean()
+            mean_auc = cv_results['test_roc_auc_ovr'].mean()
 
-    # 5) Sauvegarde modèle et scaler
-    save_model(model, model_output)
-    save_model(scaler, scaler_output)
+            mlflow.log_param("model_type", name)
+            mlflow.log_metric("accuracy", mean_accuracy)
+            mlflow.log_metric("auc", mean_auc)
+            
+            logging.info(f"{name}: Accuracy={mean_accuracy:.4f}, AUC={mean_auc:.4f}")
 
-    logging.info(f"Modèle sauvegardé dans {model_output}")
-    logging.info(f"Scaler sauvegardé dans {scaler_output}")
+            # On choisit le meilleur modèle sur la base de l'AUC
+            if mean_auc > best_auc:
+                best_auc = mean_auc
+                best_pipeline = pipeline
+                best_name = name
+
+    # Finalisation
+    logging.info(f"--- Meilleur Modèle (basé sur AUC) : {best_name} ---")
+    best_pipeline.fit(X, y)
+    
+    with mlflow.start_run(run_name="FINAL_CHOICE"):
+        mlflow.log_param("best_model", best_name)
+        mlflow.log_metric("final_auc", best_auc)
+        mlflow.sklearn.log_model(best_pipeline, "model")
+        
+        save_model(best_pipeline, os.path.join(MODEL_DIR, f"{config['model']['name']}.pkl"))
+
+if __name__ == "__main__":
+    train()

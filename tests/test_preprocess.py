@@ -1,34 +1,24 @@
-import numpy as np
+import os
 import pandas as pd
+import pytest
+from ml.preprocess import preprocess
+from ml.utils import DATA_DIR
 
-from ml.preprocess import preprocess_data, split_data
+def test_preprocess_creates_files():
+    # Exécuter le preprocess
+    preprocess()
+    
+    train_path = os.path.join(DATA_DIR, "processed", "train.parquet")
+    test_path = os.path.join(DATA_DIR, "processed", "test.parquet")
+    
+    assert os.path.exists(train_path)
+    assert os.path.exists(test_path)
 
-
-def test_preprocess_data():
-    df = pd.DataFrame({"age": [20, 30, 40], "bmi": [22.5, 27.1, 30.2], "diabetes": [0, 1, 1]})
-
-    X_scaled, y, scaler = preprocess_data(df, target="diabetes")
-
-    # X : 2 features
-    assert X_scaled.shape == (3, 2)
-
-    # y
-    assert list(y) == [0, 1, 1]
-
-    # scaler
-    assert scaler is not None
-
-    # scaling centré
-    np.testing.assert_almost_equal(X_scaled.mean(axis=0), [0, 0], decimal=6)
-
-
-def test_split_data():
-    X = np.random.rand(10, 3)
-    y = np.random.randint(0, 2, size=10)
-
-    X_train, X_test, y_train, y_test = split_data(X, y, test_size=0.2, random_state=42)
-
-    assert X_train.shape[0] == 8
-    assert X_test.shape[0] == 2
-    assert y_train.shape[0] == 8
-    assert y_test.shape[0] == 2
+def test_class_balancing():
+    train_path = os.path.join(DATA_DIR, "preprocessed", "train.parquet")
+    df = pd.read_parquet(train_path)
+    
+    counts = df["Diabetes_012"].value_counts()
+    # Vérifier que les classes sont égales à la target_size (35346)
+    assert counts.min() == 35346
+    assert counts.max() == 35346
