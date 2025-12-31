@@ -1,15 +1,13 @@
 import os
 import sys
 
-import streamlit as st
-import pickle
 import numpy as np
+import streamlit as st
 
+from ml.utils import DEFAULT_MODEL_PATH, load_model
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(PROJECT_ROOT)  # ajoute le projet au PYTHONPATH
-
-from ml.utils import load_model, DEFAULT_MODEL_PATH, DEFAULT_SCALER_PATH
 
 
 model = load_model(DEFAULT_MODEL_PATH)
@@ -40,16 +38,39 @@ with st.form("diabete_form"):
     Education = st.number_input("Éducation", 0, 120)
     Income = st.number_input("Revenu", 0, 120)
 
-
     submit = st.form_submit_button("Prédire")
 
     if submit:
-        input_data = np.array([[HighBP, HighChol, CholCheck, BMI, Smoker, Stroke, HeartDiseaseorAttack, PhysActivity, Fruits, Veggies, HvyAlcoholConsump,
-                                AnyHealthcare, NoDocbcCost, GenHlth, MentHlth, PhysHlth, DiffWalk,
-                                Sex, Age, Education, Income]])
-        
+        input_data = np.array(
+            [
+                [
+                    HighBP,
+                    HighChol,
+                    CholCheck,
+                    BMI,
+                    Smoker,
+                    Stroke,
+                    HeartDiseaseorAttack,
+                    PhysActivity,
+                    Fruits,
+                    Veggies,
+                    HvyAlcoholConsump,
+                    AnyHealthcare,
+                    NoDocbcCost,
+                    GenHlth,
+                    MentHlth,
+                    PhysHlth,
+                    DiffWalk,
+                    Sex,
+                    Age,
+                    Education,
+                    Income,
+                ]
+            ]
+        )
+
         prediction = model.predict(input_data)
-        
+
         if prediction[0] == 1:
             st.error("⚠️ Le modèle prédit que vous êtes à risque de diabète.")
         else:
