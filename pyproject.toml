@@ -22,7 +22,8 @@ dependencies = [
     "pyarrow",
     "pyyaml",
     "mlflow",
-    "matplotlib"
+    "matplotlib",
+    "openai"
 ]
 
 [project.optional-dependencies]
